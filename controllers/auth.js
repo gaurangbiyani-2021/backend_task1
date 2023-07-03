@@ -39,3 +39,61 @@ export const signin = async(req,res,next)=>{
         next(err);
     }
 }
+
+export const forgotPassword = async (req, res, next) => {
+    const { email } = req.body;
+  
+    try {
+      const user = await User.findOne({ email });
+  
+      if (!user) {
+        return res.status(400).json({ error: "User with email does not exist" });
+      }
+  
+      const token = jwt.sign(
+        { _id: user._id },
+        process.env.RESET_PASSWORD_KEY,
+        { expiresIn: '10m' }
+      );
+  
+      user.resetLink = token;
+      await user.save();
+
+      res.json({ resetLink: `https://example.com/reset-password/${token}` });
+    } catch (err) {
+      next(err);
+    }
+  };
+  
+  export const resetPassword = async(req,res)=>{
+
+    const{id,token} = req.params;
+    const{password} = req.body;
+
+    const user = await User.findOne({_id:id});
+    if(!user){
+        return res.status(400).json("user does not exit");
+    }
+
+    const secret = process.env.JWT + user.password;
+
+    try{
+        // const verify = jwt.verify(token,secret);
+        const hash = await bcrypt.hash(password,10);
+
+        await User.updateOne(
+            {
+                _id:id,
+            },
+            {
+                $set:{
+                    password:hash,
+                },
+            }
+        );
+        console.log("updated");
+        res.json({status:"password updated"});
+    }catch(err){
+        console.log(err);
+    }
+  }
