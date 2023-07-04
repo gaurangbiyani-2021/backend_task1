@@ -11,7 +11,7 @@ app.use(express.json());
 
 const connect = async(req,res)=>{
     try{
-        await mongoose.connect(process.env.MONGO);
+        await mongoose.connect(process.env.MONGO,{ useNewUrlParser: true, useUnifiedTopology: true });
         console.log("mongodb connected");
     }catch(err){
         console.log('Failed to connect to MongoDB', err)
